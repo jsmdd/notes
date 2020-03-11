@@ -182,7 +182,7 @@ drwxr-xr-x  2 root root       29 Mar  9 17:43 rules
 ## 监控服务器 ##
 <br>
 
-在被监控端需要装一个名为 `node_exporter` 的导出器，他会帮你收集系统指标和一些软件运行的指标，把指标暴露出去，这样 `prometheus` 就可以去采集了，具体 `node_exporter` 能采集哪些东西，看官方吧，还是蛮多的，现在随便找个服务器下载一下 `node_exporter` 运行起来就行了。
+在被监控端需要装一个名为 `node_exporter` 的导出器，他会帮你收集系统指标和一些软件运行的指标，把指标暴露出去，这样 `prometheus` 就可以去采集了，具体 `node_exporter` 能采集哪些东西，看官方吧，还是蛮多的，现在随便找个服务器下载一下 `node_exporter` 运行起来就行了，启动端口为`9100`。
 ```shell
 [root@IP-A ~]# wget https://github.com/prometheus/node_exporter/releases/download/v0.18.1/node_exporter-0.18.1.linux-amd64.tar.gz
 [root@IP-A ~]# tar zxf node_exporter-0.18.1.linux-amd64.tar.gz 
@@ -299,17 +299,17 @@ Query OK, 0 rows affected (0.00 sec)
 
 接下来就是配置`mysqld_exporter`的配置文件了,再将`mysqld_exporter`交给`systemctl`去管理
 ```shell
-[root@test1 ~] cat /usr/local/mysqld_exporter/.my.cnf
+[root@IP-A ~] cat /usr/local/mysqld_exporter/.my.cnf
 [client]
 user=exporter
 password=exporter
 port=33000
-[root@test1 /usr/lib/systemd/system]# cat /usr/local/mysqld_exporter/.my.cnf
+[root@IP-A /usr/lib/systemd/system]# cat /usr/local/mysqld_exporter/.my.cnf
 [client]
 user=exporter
 password=exporter
 port=33000
-[root@test1 /usr/lib/systemd/system]# cat mysqld_exporter.service 
+[root@IP-A /usr/lib/systemd/system]# cat mysqld_exporter.service 
 [Unit]
 Description=mysqld_exporter
 
@@ -333,7 +333,7 @@ WantedBy=multi-user.targe
 >这里有一点还是值得说的，要监控的mysql服务如果启动端口不是默认的3306，是需要如上述加一行port参数的
 <br>
 
-这样就好了，现在把这个加到普罗米修斯中，这里就不贴了，看下上面我贴出来的文件，修改完后记得重启`prometheus`
+这样就好了，现在把这个加到普罗米修斯中，这里就不贴了，看下上面我贴出来的文件，修改完后记得重启`prometheus`,IP-B重复上述操作
 <br>
 
 再就是，在Grafana中导入id为7362，看看效果
@@ -342,3 +342,42 @@ WantedBy=multi-user.targe
 <br>
 
 ## 监控nginx ##
+<br>
+
+监控nginx有两种方法，一个是在openresty上监控，另一个直接在nginx上监控，
+这里就直接在nginx监控吧，前提条件是 nginx 要编译进 nginx-module-vts 模块，先下载吧
+```shell
+[root@IP-A ~]# wget https://github.com/vozlt/nginx-module-vts/archive/v0.1.18.tar.gz
+[root@IP-A ~]# tar xf v0.1.18.tar.gz
+```
+<br>
+
+在编译nginx的时候加一条`--add-module=PATH/nginx-module-vts-0.1.18`,如果是在已经有nginx的服务器上的，不要`make install`，具体操作，贴一下地址吧,[这里](https://www.jianshu.com/p/695af00ee857),然后就是修改nginx的配置文件了，具体操作不细说，贴个地址，[这里](https://blog.csdn.net/hxpjava1/article/details/80451101)
+<br>
+
+接下来就是在被监控端需要装一个名为 `nginx-vts-exporter `的组件，启动端口为`9913`,直接来下载吧
+```shell
+[root@IP-A ~]# wget https://github.com/hnlq715/nginx-vts-exporter/releases/download/v0.10.3/nginx-vts-exporter-0.10.3.linux-amd64.tar.gz
+[root@IP-A ~]# tar xf nginx-vts-exporter-0.10.3.linux-amd64.tar.gz
+[root@IP-A ~]# mv nginx-vts-exporter-0.10.3.linux-amd64 /usr/local/nginx-vts-exporter
+[root@IP-A ~]# cat /usr/lib/systemd/system/nginx-vts-exporter.service 
+[Unit]
+Description=nginx-vts-exporter
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/nginx-vts-exporter/nginx-vts-exporter -nginx.scrape_uri=http://127.0.0.1:6666/vts_status/format/json
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+```
+> 我这里nginx启动的是一个6666端口来提供JSON格式的数据
+<br>
+
+修改`prometheus`的配置文件，重启服务，在`grafana`导入一个id为`2949`，看看图
+![alt text](http://www.yassor.xyz:81/photo/5.png)
+<br>
+
+这样就可以了，IP-B重复上述操作
