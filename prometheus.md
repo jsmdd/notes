@@ -241,7 +241,7 @@ nodes 内存使用率:
 ```
 <br>
 
-`grafana`服务默认是3000端口，也可以使用`docker`启动，命令如下
+`grafana`服务默认是3000端口，也可以使用`docker`启动，命令如下，这里就不用了
 ```shell
 [root@test1 ~]# docker run \
 > -u 0 \
@@ -446,8 +446,21 @@ groups:
 ```
 <br>
 
-这里说下告警表达式的`up`,每一个监控项都会有一个`up`指标，1为真，0为假，`up == 0`就是说明监控项挂了
+这里说下告警表达式的`up`,每一个监控项都会有一个`up`指标，1为真，0为假，`up == 0`就是说明监控项挂了，如果要监控其他指标看看官网参数
+![alt text](http://www.yassor.xyz:81/photo/6.png)
 <br>
 
 修改后，重启`prometheus`，直接访问
-![alt text](http://www.yassor.xyz:81/photo/6.png)
+![alt text](http://www.yassor.xyz:81/photo/8.png)
+<br>
+
+可以看到红箭头指向的`State`是`PENDING`，这说明已经准备发向`alertmanager`了，如果变为`Firing`,就可以在`alertmanager`看到相应的报警信息
+<br>
+
+` alertmanager` 告警状态分为三种，如下
+- Inactive	空闲
+- Pending	已触发阈值，但未满足告警持续时间，for 时间
+- Firing	已触发阈值且满足告警持续时间，通知 alertmanager 你可以发送告警了
+<br>
+
+还有设置告警的分发策略，告警的收敛机制等等就不做演示了
