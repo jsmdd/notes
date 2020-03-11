@@ -381,3 +381,9 @@ WantedBy=multi-user.target
 <br>
 
 这样就可以了，IP-B重复上述操作
+<br>
+
+## alertmanager ##
+<br>
+
+`Prometheus`不支持告警的，告警是由`alertmanager` 这个组件完成的，`Prometheus`将告警收集起来会推送给 `alertmanager`，`alertmanager` 接收到告警后决定怎么去处理这些告警，应该发给谁，下面先部署一下 `alertmanager` 吧,具体流程是 Prometheus -> alertmanager -> USER
