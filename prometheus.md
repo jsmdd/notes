@@ -221,7 +221,7 @@ go_gc_duration_seconds_count 5176
 ......
 ```
 
-出现上述情况说明`node_exporter`已经正常启动了，这里要注意下`node`节点与`Prometheus`的通信问题，也可以在`Prometheus`的web上查看这个信息，顺便查下数据
+出现上述情况说明`node_exporter`已经正常启动了，`IP-B`重复上述操作，这里要注意下`node`节点与`Prometheus`的通信问题，也可以在`Prometheus`的web上查看这个信息，顺便查下数据
 ![alt text](https://res.rj-bai.com/201907/20190709111843.png?imageView2/2/w/1920/q/75)
 ![alt text](https://res.rj-bai.com/201907/20190709112040.png?imageView2/2/w/1920/q/75)
 <br>
@@ -258,7 +258,24 @@ nodes 内存使用率:
 <br>
 
 这样服务就启动了，直接访问看下,用户名密码默认 `admin/admin`，初次登陆会让你修改密码，就可以看到主页了，然后直接添加数据源，把 `prometheus`加进去，保存就行了
-![alt text](https://res.rj-bai.com/201907/20190709163321.png?imageView2/2/w/1920/q/75)
+![alt text](http://www.yassor.xyz:81/photo/3.png)
 <br>
 
 直接导入一个仪表盘进来吧，ID 是 9276
+![alt text](http://www.yassor.xyz:81/photo/1.png)
+输入9276，等几秒就添加数据源了，选择`Prometheus`
+![alt text](http://www.yassor.xyz:81/photo/2.png)
+<br>
+
+## 监控 mysql ##
+<br>
+
+在被监控端需要装一个名为 `mysqld_exporter`的组件，直接来下载吧
+```
+[root@IP-A ~]# wget https://github.com/prometheus/mysqld_exporter/releases/download/v0.12.1/mysqld_exporter-0.12.1.linux-amd64.tar.gz
+[root@IP-A ~]# tar xf mysqld_exporter-0.12.1.linux-amd64.tar.gz
+[root@IP-A ~]# mv mysqld_exporter-0.12.1.linux-amd64 /usr/local/mysqld_exporter
+```
+<br>
+
+这里的还要`mysql`给`mysqld_exporter`组件授一个用户
