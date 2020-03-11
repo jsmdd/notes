@@ -234,6 +234,9 @@ nodes 内存使用率:
 等等这些吧，更多的看看官网文档
 <br>
 
+现在把这个加到普罗米修斯中，这里就不贴了，看下上面我贴出来的文件，修改完后记得重启`prometheus`
+<br>
+
 ## 部署 grafana ##
 <br>
 
@@ -270,7 +273,7 @@ nodes 内存使用率:
 ## 监控 mysql ##
 <br>
 
-在被监控端需要装一个名为 `mysqld_exporter`的组件，直接来下载吧
+在被监控端需要装一个名为 `mysqld_exporter`的组件，启动端口为`9104`,直接来下载吧
 ```
 [root@IP-A ~]# wget https://github.com/prometheus/mysqld_exporter/releases/download/v0.12.1/mysqld_exporter-0.12.1.linux-amd64.tar.gz
 [root@IP-A ~]# tar xf mysqld_exporter-0.12.1.linux-amd64.tar.gz
@@ -279,3 +282,63 @@ nodes 内存使用率:
 <br>
 
 这里的还要`mysql`给`mysqld_exporter`组件授一个用户
+```shell
+mysql> CREATE USER 'exporter'@'localhost' IDENTIFIED BY 'exporter';
+Query OK, 0 rows affected (0.02 sec)
+
+mysql> GRANT PROCESS, REPLICATION CLIENT, SELECT ON *.* TO 'exporter'@'localhost';
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> flush privileges;
+Query OK, 0 rows affected (0.00 sec)
+```
+<br>
+
+> 这里要注意监控的mysql版本最好是5.7，要不然有些数据显示不出来，还有就是授权的用户要试下能否登陆，要不然查询不到数据的
+<br>
+
+接下来就是配置`mysqld_exporter`的配置文件了,再将`mysqld_exporter`交给`systemctl`去管理
+```shell
+[root@test1 ~] cat /usr/local/mysqld_exporter/.my.cnf
+[client]
+user=exporter
+password=exporter
+port=33000
+[root@test1 /usr/lib/systemd/system]# cat /usr/local/mysqld_exporter/.my.cnf
+[client]
+user=exporter
+password=exporter
+port=33000
+[root@test1 /usr/lib/systemd/system]# cat mysqld_exporter.service 
+[Unit]
+Description=mysqld_exporter
+
+[Service]
+Restart=on-failure
+ExecStart=/usr/local/mysqld_exporter/mysqld_exporter --config.my-cnf /usr/local/mysqld_exporter/.my.cnf \
+  --collect.slave_status \
+  --collect.slave_hosts \
+  --log.level=error \
+  --collect.info_schema.processlist \
+  --collect.info_schema.innodb_metrics \
+  --collect.info_schema.innodb_tablespaces \
+  --collect.info_schema.innodb_cmp \
+  --collect.info_schema.innodb_cmpmem 
+
+[Install]
+WantedBy=multi-user.targe
+```
+<br>
+
+>这里有一点还是值得说的，要监控的mysql服务如果启动端口不是默认的3306，是需要如上述加一行port参数的
+<br>
+
+这样就好了，现在把这个加到普罗米修斯中，这里就不贴了，看下上面我贴出来的文件，修改完后记得重启`prometheus`
+<br>
+
+再就是，在Grafana中导入id为7362，看看效果
+![alt text](http://www.yassor.xyz:81/photo/4.png)
+刚启动的话要等一会才有数据显示出来，主要还是看http://IP-A:9104/metrics 有没有数据
+<br>
+
+## 监控nginx ##
