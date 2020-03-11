@@ -380,3 +380,74 @@ WantedBy=multi-user.target
 <br>
 
 `Prometheus`不支持告警的，告警是由`alertmanager` 这个组件完成的，`Prometheus`将告警收集起来会推送给 `alertmanager`，`alertmanager` 接收到告警后决定怎么去处理这些告警，应该发给谁，下面先部署一下 `alertmanager` 吧,具体流程是 Prometheus -> alertmanager -> USER
+<br>
+
+ `alertmanager`没必要和`Prometheus`放在一起，也可以做一个alertmanager的高可用，这里资源紧张就放在一起了，访问端口为`9093`
+```shell
+[root@test1 ~]# wget https://github.com/prometheus/alertmanager/releases/download/v0.18.0/alertmanager-0.18.0.linux-amd64.tar.gz
+[root@test1 ~]# tar zxf alertmanager-0.18.0.linux-amd64.tar.gz 
+[root@test1 ~]# mv alertmanager-0.18.0.linux-amd64 /usr/local/alertmanager
+[root@test1 /usr/local/alertmanager]# cat /usr/lib/systemd/system/alertmanager.service 
+[Unit]
+Description=alertmanager
+
+[Service]
+Restart=on-failure
+ExecStart=/usr/local/alertmanager/alertmanager --config.file=/usr/local/alertmanager/alertmanager.yml
+
+[Install]
+WantedBy=multi-user.target
+```
+<br>
+
+首先需要在`prometheus` 中定义监控规则，说白了就是写一个触发器，某个值超过了设置的阈值就要告警了，触发告警之后 `prometheus` 会推送当前的告警规则到 `alertmanager`，`alertmanager` 收到了会进行一系列的流程处理，然后发送到USER手里，先贴下我这里的主配置文件，
+```shell
+[root@test1 /usr/local/alertmanager]# cat alertmanager.yml
+global:
+  resolve_timeout: 5m
+  smtp_smarthost: 'smtp.163.com:25'         #smtp服务地址
+  smtp_from: '**********@163.com'                  #发送邮箱
+  smtp_auth_username: '**********@163.com'         #认证用户名
+  smtp_auth_password: '*********'                #认证密码
+  smtp_require_tls: false                   #禁用tls
+
+route:
+  group_by: ['alertname']
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 1m
+  receiver: 'email'                      #定义接受告警组名
+receivers:                                  
+- name: 'email'                          #定义组名
+  email_configs:                         #配置邮件
+  - to: '**********@163.com'                     #收件人
+```
+<br>
+
+启动后，直接访问
+![alt text](http://www.yassor.xyz:81/photo/7.png)
+<br>
+
+上述是利用smtp发送邮件的方式，也可以其他的方式，配置方式不同而已，这里就做一个演示。可以先用`./amtool check-config alertmanager.yml` 检查下，有`SUCCESS`就是可以了。`alertmanager`已经设置好了，再去设置`prometheus`里的`rule`
+```shell
+[root@test1 /usr/local/prometheus/rules]# cat example.yml
+groups:
+- name: exports.rules     ##定义这组告警的组名，同性质的，都是监控实例exports是否开启的模板
+  rules:
+
+  - alert: 采集器凉了     ## 告警名称
+    expr: up == 0        ## 告警表达式，监控up指标，如果等于0就进行下面的操作
+    for: 1m              ## 持续一分钟为0进行告警
+    labels:              ## 定义告警级别
+      severity: ERROR
+    annotations:         ## 定义了告警通知怎么写，默认调用了{$labels.instance&$labels.job}的值
+      summary: "实例 {{ $labels.instance }} 采集器凉了撒"
+      description: "实例 {{ $labels.instance }} job 名为 {{ $labels.job }} 的采集器凉了有一分钟了撒"
+```
+<br>
+
+这里说下告警表达式的`up`,每一个监控项都会有一个`up`指标，1为真，0为假，`up == 0`就是说明监控项挂了
+<br>
+
+修改后，重启`prometheus`，直接访问
+![alt text](http://www.yassor.xyz:81/photo/6.png)
