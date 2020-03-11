@@ -2,13 +2,6 @@
 > by yassor 20.3.11
 <br>
 
-## prometheus的概述 ##
-<br>
-
-**略**
-
-<br>
-
 ## Prometheus 部署 ##
 <br>
 
@@ -182,7 +175,7 @@ drwxr-xr-x  2 root root       29 Mar  9 17:43 rules
 ## 监控服务器 ##
 <br>
 
-在被监控端需要装一个名为 `node_exporter` 的导出器，他会帮你收集系统指标和一些软件运行的指标，把指标暴露出去，这样 `prometheus` 就可以去采集了，具体 `node_exporter` 能采集哪些东西，看官方吧，还是蛮多的，现在随便找个服务器下载一下 `node_exporter` 运行起来就行了，启动端口为`9100`。
+在被监控端需要装一个名为 `node_exporter` 的导出器，他会帮你收集系统指标和一些软件运行的指标，把指标暴露出去，这样 `prometheus` 就可以去采集了，具体 `node_exporter` 能采集哪些东西，看官方吧，还是蛮多的，现在下载 `node_exporter` ，启动端口为`9100`。
 ```shell
 [root@IP-A ~]# wget https://github.com/prometheus/node_exporter/releases/download/v0.18.1/node_exporter-0.18.1.linux-amd64.tar.gz
 [root@IP-A ~]# tar zxf node_exporter-0.18.1.linux-amd64.tar.gz 
