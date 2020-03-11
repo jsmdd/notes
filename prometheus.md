@@ -446,7 +446,7 @@ groups:
 ```
 <br>
 
-这里说下告警表达式的`up`,每一个监控项都会有一个`up`指标，1为真，0为假，`up == 0`就是说明监控项挂了，如果要监控其他指标看看官网参数
+这里说下告警表达式的`up`,每一个监控项都会有一个`up`指标，1为真，0为假，`up == 0`就是说明监控项挂了，如果要监控其他指标查下参数
 ![alt text](http://www.yassor.xyz:81/photo/6.png)
 <br>
 
@@ -454,7 +454,8 @@ groups:
 ![alt text](http://www.yassor.xyz:81/photo/8.png)
 <br>
 
-可以看到红箭头指向的`State`是`PENDING`，这说明已经准备发向`alertmanager`了，如果变为`Firing`,就可以在`alertmanager`看到相应的报警信息
+可以看到红箭头指向的`State`是`PENDING`，这说明已经准备发向`alertmanager`了，如果变为`Firing`,就可以在`alertmanager`看到相应的报警信息,一分钟后收到的邮件，看看图
+![alt text](http://www.yassor.xyz:81/photo/9.png)
 <br>
 
 ` alertmanager` 告警状态分为三种，如下
