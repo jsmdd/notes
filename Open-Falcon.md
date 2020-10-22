@@ -1,4 +1,4 @@
-## open-falcon的目标是做最开放、最好用的互联网企业级监控产品
+# open-falcon的目标是做最开放、最好用的互联网企业级监控产品
 已知对比：相较于zabbix来说，
 - 强大灵活的数据采集：自动发现，支持falcon-agent、snmp、支持用户主动push、用户自定义插件支持、opentsdb data model like（timestamp、endpoint、metric、key-value tags）
 > 简单点就是说，扩展多
@@ -20,7 +20,7 @@
 > python天下第一
 
 
-## 这里着重说一下open-falcon采用的Storage方式
+# 这里着重说一下open-falcon采用的Storage方式
 对于监控系统来讲，历史数据的存储和高效率查询，永远是个很难的问题！
 - 因为平常的业务系统永远是读操作远远大于写操作，而对于监控系统来说写操作是远远大于读操作的，对用常用的MySQL、postgresql、mongodb来说都是无法完成的
 - 对于监控系统来说是通过采集周期来收集数据的，而1分钟和5分钟的周期占了大多数，这意味着一天24小时都不会有数据量低的情况
@@ -28,3 +28,21 @@
 
 open-falcon在这块，投入了较大的精力。我们把数据按照用途分成两类，一类是用来绘图的，一类是用户做数据挖掘的。
 > 参考rrdtool的理念，在数据每次存入的时候，会自动进行采样、归档，同时为了不丢失信息量，数据归档的时候，会按照平均值采样、最大值采样、最小值采样存三份
+
+
+# 结构图
+![alt text](http://www.yassor.xyz:81/photo/10.png)
+<br/>
+
+
+## Agent:
+- agent用于采集机器负载监控指标，比如cpu.idle、load.1min、disk.io.util等等，每隔60秒push给Transfer。agent与Transfer建立了长连接，数据发送速度比较快，agent提供了一个http接口/v1/push用于接收用户手工push的一些数据，然后通过长连接迅速转发给Transfer。
+- agent需要部署到所有要被监控的机器上，其资源消耗较少
+- [配置文件说明及相关参数](https://book.open-falcon.org/zh_0_2/distributed_install/agent.html)
+<br/>
+
+## Transfer
+- transfer是数据转发服务。它接收agent上报的数据，然后按照哈希规则进行数据分片、并将分片后的数据分别push给graph&judge等组件。同时 transfer 也支持将数据转发给 opentsdb 和 influxdb，也可以转发给另外一个 transfer。
+- 部署完成transfer组件后，请修改agent的配置，使其指向正确的transfer地址。在安装完graph和judge后，请修改transfer的相应配置、使其能够正确寻址到这两个组件。
+- [配置文件说明及相关参数](https://book.open-falcon.org/zh_0_2/distributed_install/transfer.html)
+<br/>
